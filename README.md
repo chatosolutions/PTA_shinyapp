@@ -45,7 +45,7 @@ where
 $$f(t) = \\frac{ln(2)}{t}\\sum\_{i=1}^{N}V(i)\\overline{f}(s)$$
 $$s=i\\frac{ln(2)}{t}$$
 The variable N could be one of the even numbers from 8 to 12. In this
-case we use the *V*(*i*) with Stehfest parameter *N* = 8 from xxx
+case we use the *V*(*i*) with Stehfest parameter *N* = 8
 
 <table>
 <thead>
