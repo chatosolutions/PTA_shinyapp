@@ -19,7 +19,8 @@ shinyUI(fluidPage(
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
-          
+            tags$a(href = "https://www.chatosolutions.com/", "Home", 
+                   target="_blank"),
           selectInput("type_WT","Type", c("Drowdown")),
           h3("Input data"),
           
@@ -47,14 +48,33 @@ shinyUI(fluidPage(
           
           numericInput("k","Permeability (md)", value = ""),
           numericInput("s","Skin", value = ""),
-          numericInput("C","WBS coefficient (bbl/psi)", value = "")
+          numericInput("C","WBS coefficient (bbl/psi)", value = ""),
+          actionButton("gen_model", "Generate model")
           
 
+          
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
-            plotlyOutput("p", height = "70vh")
+            plotlyOutput("p", height = "70vh"),
+            
+            column(4,
+                   numericInput("tdpr","t\u0394p'r", value = ""),
+                   numericInput("dtr","\u0394tr", value = "")
+            ),
+            
+            column(4,
+                   numericInput("dpr","\u0394pr", value = ""),
+                   numericInput("dtw","\u0394tw", value = "")
+            ),
+            
+            column(4,
+                   numericInput("dpw","\u0394pw", value = "")
+            )
+            
+            
+            
         )
     )
 ))

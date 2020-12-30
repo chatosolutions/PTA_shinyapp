@@ -2,8 +2,8 @@
 title: "PTA shinyapp"
 output: 
         
-        md_document: default
         html_document: default
+        md_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -12,11 +12,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Pressure transient analysis 
 
-Starting an shiny application for PTA using the Tiab's Direct Synthesis technique (Manual parameter estimation using Log-Log Plot)
+Starting a shiny application for PTA using the Tiab's Direct Synthesis technique (Manual parameter estimation using Log-Log Plot) for a vertical well with constant WBS and skin in an infinity-acting reservoir.
 
 [PTA webapp](https://chatosolutions.shinyapps.io/PTAwebapp/?_ga=2.253088457.1594544277.1607619484-1622287101.1605639564)
 
- ![](data/image1.png)
+ ![](data/image2.png)
  
 In this case we need a two columns dataset in .csv format, time in the first column and well pressure in the second one, in hours and psia.
 
@@ -25,6 +25,30 @@ data <- read.csv("data/Example_4.3_AWTI.csv")
 head(data)
 ```
 
-The app allows get permeability, skin and well storage coefficiente. The plot has a horizontal line to fit IARF data of the derivative and a unit-slope line to fit well storage data. 
+The app allows get permeability, skin and well storage coefficiente with the following equations (1)
+
+$$k = \frac{70.6qB\mu}{h(t\Delta p')_r} $$
+$$ s = \frac{1}{2}\left[\frac{\Delta p_r}{(t\Delta p')_r}-ln\left(\frac{k\Delta t_r}{1688\phi \mu c_t r_w^2} \right) \right]$$
+$$ C = \frac{qB\Delta t_w}{24\Delta p_w}$$
+The plot has a horizontal line to fit IARF data of the derivative and a unit-slope line to fit well storage data. After fit the IARG and WDS lines we can generate de analytical model using the laplace transform solutions to the diffusivity equation
+
+Transform of the dimensionless wellbore pressure (2):
+
+$$ \overline{P_{wD}}=\frac{1}{u}\left[\frac{K_0(\sqrt{u})+s\sqrt{u}K_1(\sqrt{u})}{\sqrt{u}K_1(\sqrt{u})+C_Du[K_0(\sqrt{u})+s\sqrt{u}K_1(\sqrt{u}])}\right]$$
+Through the stehfest numerical inverse transformation method (1976), we can calculate dimensionless wellbore pressure in real space. The Laplace transform method can be given by (3)
+
+$$ V(i) = (-1)^{\frac{N}{2}+i}\sum_{k=\frac{i+1}{2}}^{min\left(i,\frac{N}{2} \right)} \frac{k^\frac{N}{2}(2k)!}{\left(\frac{N}{2}-k \right)!(k)!(k-1)!(i-k)!(2k-i)!}$$
+where
+$$f(t) = \frac{ln(2)}{t}\sum_{i=1}^{N}V(i)\overline{f}(s)$$                     $$s=i\frac{ln(2)}{t}$$
+The variable N could be one of the even numbers from 8 to 12. In this case we use the $V(i)$ with Stehfest parameter $N=8$
+
+|$V(1)$|$V(2)$|$V(3)$|$V(4)$|$V(5)$|$V(6)$|$V(7)$|$V(8)$|
+|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
+| -0.3333|48.3333 | -906| 5464.6667| -14376.66667| 18730|-11946.6667 |2986.6667|
 
 
+References
+
+1. Spivey, J. & Lee, J. (2013) Applied well test interpretation. Society of petroleum engineers
+2. Lee, J., Rollins, J. & Spivey, J. (2003) Pressure transient testing. Society of petroleum engineers
+3. Sun, H. (2015) Advanced Production Decline Analysis. Gulf Professional Publishing

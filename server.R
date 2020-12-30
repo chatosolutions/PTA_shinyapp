@@ -1,5 +1,5 @@
 #
-# This is the server logic of a Shiny web application. You can run the
+# PTAwebapp
 # application by clicking 'Run App' above.
 #
 # Find out more about building applications with Shiny here:
@@ -12,16 +12,19 @@ library(plotly)
 library(dplyr)
 library(emdbook)
 
-
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
     
-    v <- reactiveValues(datatest = NULL, xint1 = 1, yint1 = 0, xint2.1 = 1, yint2.1 = 0, xint2.2 = 1, yint2.2 = 0)
+    v <- reactiveValues(datatest = NULL, 
+                        datamodel = NULL,
+                        xint1 = 1, 
+                        yint1 = 0, 
+                        xint2.1 = 1, yint2.1 = 0, xint2.2 = 1, yint2.2 = 0)
     
     observe({
-      if(!is.null(input$filePTA)){
+      if(!is.null(data_origin())){
         
-        pwf.data <- read.csv(file=input$filePTA$datapath) #read.csv("E:/SHINY_APP/pruebas/wt.csv")
+        pwf.data <- read.csv(file=data_origin()$datapath) #read.csv("E:/SHINY_APP/pruebas/wt.csv")
         colnames(pwf.data) <- c("t", "pwf")
         pwf.data$dp <- pwf.data$pwf[1] - pwf.data$pwf
         pwf.data$Ddp <- -derivative.Bourdet(log(pwf.data$t),pwf.data$pwf)
@@ -45,7 +48,6 @@ shinyServer(function(input, output, session) {
     })
 
     
-    
     observe({ 
       
       q <- input$qo
@@ -58,19 +60,45 @@ shinyServer(function(input, output, session) {
       ct <- input$ct
       
       dpr <- dplyr::last(v$datatest$dp)
-      tdp <- dplyr::last(v$datatest$t)
+      dtr <- dplyr::last(v$datatest$t)
       
       k <- (70.6*q*Bo*vis)/(h*v$yint1)
-      s <- 0.5*(dpr/v$yint1-log((k*tdp)/(1688*poro*vis*ct*rw^2)))
+      s <- 0.5*(dpr/v$yint1-log((k*dtr)/(1688*poro*vis*ct*rw^2)))
       C <- (q*Bo*v$xint2.1)/(24*v$yint2.1)
+      
+      updateNumericInput(session,"tdpr","t\u0394p'r", value = v$yint1)
+      updateNumericInput(session,"dtr","\u0394tr", value = dtr)
+      updateNumericInput(session,"dpr","\u0394pr", value = dpr)
+      updateNumericInput(session,"dtw","\u0394tw", value = v$xint2.1)
+      updateNumericInput(session,"dpw","\u0394pw", value = v$yint2.1)
       updateNumericInput(session, "k","Permeability (md)", value = k)
       updateNumericInput(session, "s","Skin", value = s)
       updateNumericInput(session, "C","WBS coefficient (bbl/psi)", value = C)
       
     })
     
+    data_origin <- reactiveVal(NULL)
+    
+    observeEvent(input$filePTA,{
+      data_origin(input$filePTA)
+      #print(data_origin())
+    })
+    
+    #Boton Load de ejemplos
     observeEvent(input$loadex,{
+      file_example <- data.frame(name = "Example 1", datapath = "https://raw.githubusercontent.com/chatosolutions/PTA_shinyapp/main/data/Example_4.3_AWTI.csv", stringsAsFactors = FALSE)
+      data_origin(file_example)
       
+      updateNumericInput(session,"qo","Oil rate (STB/D)", value = "125")
+      updateNumericInput(session,"poro","Porosity (fraction)", value = "0.22")
+      updateNumericInput(session,"h", "Thickness (ft)", value = "32")
+      updateNumericInput(session,"rw", "Well redius (ft)", value = "0.25")
+      updateNumericInput(session,"bo","Oil Formation Volume (Bo, bbl/STB)", value = "1.152")
+      updateNumericInput(session,"vis", "Oil Viscosity (cp)", value = "2.122")
+      updateNumericInput(session,"ct", "Total compressibility (psi^-1)", value = "0.0000109")
+      #v$yint1 <- 25.6
+      #v$xint2.1 <- 0.00086
+      #v$yint2.1 <- 1
     })
     
     output$p <- renderPlotly({
@@ -133,6 +161,14 @@ shinyServer(function(input, output, session) {
           ) %>%
           config(editable = TRUE)
         
+        if(!is.null(v$datamodel)){
+          datamodel <- v$datamodel
+          plot_pre <- plot_pre %>%
+            add_lines(x = datamodel$t, y = datamodel$dp, line = list(color = "blue")  , name = ~"Model \u0394p") %>%
+            add_lines(x = datamodel$t, y = datamodel$Ddp, name = ~"Model \u0394p'")
+            
+        }
+        
         plot_pre
       }else{
         p <- ggplot() +
@@ -146,8 +182,57 @@ shinyServer(function(input, output, session) {
 
         
     })
+    
+    #generate model with analytical solution
+    observeEvent(input$gen_model,{
+      
+      q <- input$qo
+      poro <- input$poro
+      h <- input$h
+      rw <- input$rw
+      Bo <- input$bo
+      pi <- input$pi
+      vis <- input$vis
+      ct <- input$ct
+      k <- input$k
+      s <- input$s
+      C <- input$C
+
+
+      if(!is.null(v$datatest)){
+        pwf.data <- v$datatest
+        
+        # if(pwf.data$t[1] == 0){
+        #   ti = pwf.data$t[2]
+        #   logt <- c(0,lseq(ti, dplyr::last(pwf.data$t),500))
+        # }else{
+        #   ti = pwf.data$t[1]
+        #   logt <- lseq(ti, dplyr::last(pwf.data$t),500)
+        # }
+        
+        logt <- pwf.data$t
+        td <- (0.0002637*k*(logt))/(poro*vis*ct*rw^2)
+        cD <- (0.8936*C)/(h*poro*ct*rw^2)
+        pwD <- Stehfest_inversion(td,cD,s)
+        pwf <- pi - (pwD*141.2*Bo*vis*q)/(h*k)
+
+        if(pwf.data$t[1] == 0){
+          pwf[1] = pi
+        }
+        
+        dp <- pwf[1] - pwf
+        Ddp <- -derivative.Bourdet(log(logt),pwf)
+        #print(pwf)
+        
+        v$datamodel <- data.frame(t = logt, pwf = pwf, dp = dp, Ddp = Ddp) 
+        head(v$datamodel)
+      }
+      
+    })
 
 })
+
+
 
 
 finite.differences.FW <- function(x, y) {
@@ -213,3 +298,35 @@ derivative.Bourdet <-  function(x, y){
 
     return(dev)
 }
+
+
+
+
+#Stehfest inversion
+Stehfest_inversion <- function(t, cD, s){
+  
+  #t <- 1
+  PwD <- 0
+  m <- length(t)
+  #s <- 0
+  #cD <- 1
+  V <- c(-0.3333,48.3333,-906,5464.6667,-14376.6667,18730,-11946.6667,2986.6667)
+  
+  for(j in 1:m){
+    
+    a <- log(2)/t[j]
+    i <- c(1:8)
+    u <- (i*a)
+    ru <- sqrt(u)
+    aux1 <- besselK(ru,0)+s*ru*besselK(ru,1)
+    aux2 <- ru*besselK(ru,1)+cD*u*(besselK(ru,0)+s*ru*besselK(ru,1))
+    PwDL <- 1/u*(aux1/aux2)
+    PwD[j] <- a*sum(V*PwDL)
+    
+  }
+  
+  return(PwD)
+  
+}
+
+
