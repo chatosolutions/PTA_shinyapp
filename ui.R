@@ -12,66 +12,76 @@ library(plotly)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
-
+    
     # Application title
     titlePanel("Pressure Transient Analysis"),
-
+    
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
             tags$a(href = "https://www.chatosolutions.com/", "Home", 
                    target="_blank"),
-          selectInput("type_WT","Type", c("Drowdown", "Build-up")),
-          h3("Input data"),
-          
-          fileInput('filePTA', label=NULL, multiple = FALSE, accept = NULL, width =NULL, buttonLabel = "Browse...", placeholder = "No file selected"),
-          
-          #conditionalPanel(
-              #condition = "input.type_WT == 'Drowdown'",
-              column(
-                  6,
-                  numericInput("qo", "Oil rate (STB/D)", value = ""),
-                  numericInput("poro", "Porosity (fraction)", value = ""),
-                  numericInput("h", "Thickness (ft)", value = ""),
-                  numericInput("rw", "Well redius (ft)", value = "")
-              ),
-              
-              column(
-                  6,
-                  conditionalPanel(
-                     condition = "input.type_WT == 'Drowdown'", 
-                     numericInput("pi", "Initial pressure (psi)", value = "")
-                     ),
-                  
-                    conditionalPanel(
+            
+            h1("\n"),
+            tags$a(href = "https://brave.com/es/download/", "Open PTA webapp on Brave Browser to support it", 
+                   target="_blank"),
+            h1("\n"),
+            tags$a(href = "https://www.chatosolutions.com/app.html", "Try Reservoir Engineering Tools web app ", 
+                   target="_blank"),
+            
+            
+            selectInput("type_WT","Type", c("Drowdown", "Build-up")),
+            h3("Input data"),
+            
+            fileInput('filePTA', label=NULL, multiple = FALSE, accept = NULL, width =NULL, buttonLabel = "Browse...", placeholder = "No file selected"),
+            
+            #conditionalPanel(
+            #condition = "input.type_WT == 'Drowdown'",
+            column(
+                6,
+                numericInput("qo", "Oil rate (STB/D)", value = ""),
+                numericInput("poro", "Porosity (fraction)", value = ""),
+                numericInput("h", "Thickness (ft)", value = ""),
+                numericInput("rw", "Well redius (ft)", value = "")
+            ),
+            
+            column(
+                6,
+                conditionalPanel(
+                    condition = "input.type_WT == 'Drowdown'", 
+                    numericInput("pi", "Initial pressure (psi)", value = "")
+                ),
+                
+                conditionalPanel(
                     condition = "input.type_WT == 'Build-up'", 
                     numericInput("tp", "Production time (hour)", value = "")
-                    )
-                  ,
-                  numericInput("bo", "Oil Formation Volume (Bo, bbl/STB)", value = ""),
-                  numericInput("vis", "Oil Viscosity (cp)", value = ""),
-                  numericInput("ct", "Total compressibility (psi^-1)", value = "")
-              ),
-          #), 
-          
-          
-
-          
-          actionButton("loadex", "Load Example"),
-          
-          #selectInput("type_WT","Type", c("Drowdown"))
-          h3("Results"),
-          
-          numericInput("k","Permeability (md)", value = ""),
-          numericInput("s","Skin", value = ""),
-          numericInput("C","WBS coefficient (bbl/psi)", value = ""),
-          actionButton("gen_model", "Generate model"),
-          actionButton("fit_model", "Fit model")
-          
-
-          
+                )
+                ,
+                numericInput("bo", "Oil Formation Volume (Bo, bbl/STB)", value = ""),
+                numericInput("vis", "Oil Viscosity (cp)", value = ""),
+                numericInput("ct", "Total compressibility (psi^-1)", value = "")
+            ),
+            #), 
+            
+            
+            
+            
+            actionButton("loadex", "Load Example"),
+            
+            
+            #selectInput("type_WT","Type", c("Drowdown"))
+            h3("Results"),
+            
+            numericInput("k","Permeability (md)", value = ""),
+            numericInput("s","Skin", value = ""),
+            numericInput("C","WBS coefficient (bbl/psi)", value = ""),
+            actionButton("gen_model", "Generate model"),
+            actionButton("fit_model", "Fit model"),
+            
+            
+            
         ),
-
+        
         # Show a plot of the generated distribution
         mainPanel(
             
@@ -105,17 +115,18 @@ shinyUI(fluidPage(
                         )#,
                         
                         #tabPanel(title="Semi-log analysis"
-                                      
+                        
                         #)
-
+                        
                         
             )
             
             
-
+            
             
             
             
         )
     )
 ))
+
